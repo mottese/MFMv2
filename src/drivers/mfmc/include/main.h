@@ -10,5 +10,8 @@
 #include "Element_Dreg.h"
 #include "Element_Res.h"
 #include "Element_Creg.h"
+#include "Element_Composer.h"
+#include "Element_Staff.h"
+#include "Element_Note.h"
 
 #endif /* MAIN_H */

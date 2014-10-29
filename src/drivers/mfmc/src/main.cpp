@@ -64,6 +64,9 @@ namespace MFM
       this->NeedElement(&Element_CheckerForkRed<CC>::THE_INSTANCE);
       this->NeedElement(&Element_Wanderer_Cyan<CC>::THE_INSTANCE);
       this->NeedElement(&Element_Wanderer_Magenta<CC>::THE_INSTANCE);
+      this->NeedElement(&Element_Composer<CC>::THE_INSTANCE);
+      this->NeedElement(&Element_Staff<CC>::THE_INSTANCE);
+      this->NeedElement(&Element_Note<CC>::THE_INSTANCE);
     }
 
   public:
