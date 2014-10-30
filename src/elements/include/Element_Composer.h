@@ -51,10 +51,18 @@ namespace MFM
       BITS = P::BITS_PER_ATOM,
 
       SCALE_POS = P3Atom<P>::P3_STATE_BITS_POS,
-      SCALE_LEN = 8
+      SCALE_LEN = 8,
+
+      SCALE_DEGREE_POS = SCALE_POS + SCALE_LEN,
+      SCALE_DEGREE_LEN = 3,
+
+      CHANGE_SD_POS = SCALE_DEGREE_POS + SCALE_DEGREE_LEN,
+      CHANGE_SD_LEN = 4
     };
 
     typedef BitField<BitVector<BITS>, VD::U32, SCALE_LEN, SCALE_POS> AFScale;
+    typedef BitField<BitVector<BITS>, VD::U32, SCALE_DEGREE_LEN, SCALE_DEGREE_POS> AFScaleDegree;
+    typedef BitField<BitVector<BITS>, VD::U32, CHANGE_SD_LEN, CHANGE_SD_POS> AFChangeSD;
 
     u32 GetScale(const T& us) const
     {
@@ -63,6 +71,32 @@ namespace MFM
     void SetScale(T& us, const u32 newScale) const
     {
       AFScale::Write(this->GetBits(us), newScale);
+    }
+
+    u32 GetScaleDegree(const T& us) const
+    {
+      return AFScaleDegree::Read(this->GetBits(us));
+    }
+    void SetScaleDegree(T& us, const u32 newScaleDegree) const
+    {
+      AFScaleDegree::Write(this->GetBits(us), newScaleDegree);
+    }
+
+    bool Change(const T& us) const
+    {
+      return random.OneIn(AFChangeSD::Read(this->GetBits(us)) + 1);
+    }
+    void IncreaseChangeChance(T& us) const
+    {
+      u32 newChance = AFChangeSD::Read(this->GetBits(us));
+      if (newChance > 0) newChance--; //-- because we do OneIn(chance)
+      AFScaleDegree::Write(this->GetBits(us), newChance);
+    }
+    void DecreaseChangeChance(T& us) const
+    {
+      u32 newChance = AFChangeSD::Read(this->GetBits(us));
+      if (newChance < 15) newChance++; //++ because we do OneIn(chance)
+      AFScaleDegree::Write(this->GetBits(us), newChance);
     }
 
 
@@ -108,6 +142,7 @@ namespace MFM
 
     virtual void Behavior(EventWindow<CC>& window) const
     {
+      T us = window.GetCenterAtom();
       Random & random = window.GetRandom();
       const MDist<R>& md = MDist<R>::get();
       bool performedAction = false;
@@ -133,12 +168,30 @@ namespace MFM
           break;
         }
 
+	//have a chance to change your SD. the chance increases or decreases based on the other composer's SD
+	if (otherType == Element_Composer<CC>::THE_INSTANCE.GetType()) {
+	  if (GetScaleDegree(us) == other.GetScaleDegree(other)) {
+	    IncreaseChangeChance(us);
+	  }
+	  else {
+	    DecreaseChangeChance(us);
+	  }
+	  
+	  if(Change(us)) {
+	    SetScaleDegree(us, other.GetScaleDegree(other));
+	    performedAction = true;
+	  }
+	}
+	if (performedAction) {
+	  break;
+	}
+
 
         if (otherType == Element_Note<CC>::THE_INSTANCE.GetType()) {
           if (random.OneIn(50)) { //move the note
             SPoint newPoint = SPoint(0, 0);
 
-            //if the note is to the side of the composer, our search is a bit different than if the note is above/below
+            //only look to the sides
             if (sp.GetY() == 0) {
               SPoint lowestNote;
               for (s32 x = 0; x > -4; x--) {
@@ -164,11 +217,7 @@ namespace MFM
                 }
               }
             }
-            else {
-
-
-
-            }
+         
 
             window.SwapAtoms(sp, sp + newPoint);
             performedAction = true;
