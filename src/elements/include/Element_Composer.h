@@ -157,15 +157,10 @@ namespace MFM
         if (otherType == Element_Res<CC>::THE_INSTANCE.GetType()) {
           if (random.OneIn(2)) {  //turn res into note
             window.SetRelativeAtom(sp, Element_Note<CC>::THE_INSTANCE.GetDefaultAtom());
-            performedAction = true;
           }
           else if (random.OneIn(100)) { //turn res into composer
             window.SetRelativeAtom(sp, GetDefaultAtom());
-            performedAction = true;
           }
-        }
-        if (performedAction) {
-          break;
         }
 
 	//have a chance to change your SD. the chance increases or decreases based on the other composer's SD
@@ -179,11 +174,10 @@ namespace MFM
 	  
 	  if(Change(us)) {
 	    SetScaleDegree(us, other.GetScaleDegree(other));
-	    performedAction = true;
 	  }
-	}
-	if (performedAction) {
-	  break;
+	  else if (random.OneIn(500)) {
+	    SetScaleDegree(us, random.Create(7));
+	  }
 	}
 
 
@@ -220,14 +214,10 @@ namespace MFM
          
 
             window.SwapAtoms(sp, sp + newPoint);
-            performedAction = true;
           }
         }
-        if (performedAction) {
-          break;
-        }
       }
-
+	window.SetCenterAtom(us); //Just in case we changed the SD
       this->Diffuse(window);
     }
   };
