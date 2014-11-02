@@ -10,4 +10,4 @@ terms of the GNU Lesser General Public License as published by the
 Free Software Foundation; either version 3 of the License, or (at your
 option) any later version.
 
-This branch is my attempt at creating music from an artificial life stand point.
+This fork is my attempt at creating music from an artificial life stand point.
