@@ -82,7 +82,12 @@ namespace MFM
       AFScaleDegree::Write(this->GetBits(us), newScaleDegree);
     }
 
-    bool Change(const T& us) const
+    void SetChangeChance(T& us, u32 change) const
+    {
+      AFChangeSD::Write(this->GetBits(us), change);
+    }
+
+    bool ShouldChange(const T& us, Random & random) const
     {
       return random.OneIn(AFChangeSD::Read(this->GetBits(us)) + 1);
     }
@@ -90,13 +95,13 @@ namespace MFM
     {
       u32 newChance = AFChangeSD::Read(this->GetBits(us));
       if (newChance > 0) newChance--; //-- because we do OneIn(chance)
-      AFScaleDegree::Write(this->GetBits(us), newChance);
+      AFChangeSD::Write(this->GetBits(us), newChance);
     }
     void DecreaseChangeChance(T& us) const
     {
       u32 newChance = AFChangeSD::Read(this->GetBits(us));
       if (newChance < 15) newChance++; //++ because we do OneIn(chance)
-      AFScaleDegree::Write(this->GetBits(us), newChance);
+      AFChangeSD::Write(this->GetBits(us), newChance);
     }
 
 
@@ -131,21 +136,82 @@ namespace MFM
       return 0xffb27300;
     }
 
+    virtual u32 LocalPhysicsColor(const T & atom, u32 selector) const
+    {
+      u32 sd = GetScaleDegree(atom);
+      switch (sd) {
+      case 0 :
+        return 0xed1d2b;
+      case 1:
+        return 0x283891;
+      case 2:
+        return 0xffffff;
+      case 3:
+        return 0x00a651;
+      case 4:
+        return 0xf7941e;
+      case 5:
+        return 0xfff200;
+      case 6:
+        return 0x662d91;
+      default:
+        return 0x0;
+      }
+      return 0x0;
+    }
+
     virtual const T& GetDefaultAtom() const
     {
       static T defaultAtom(TYPE(), 0, 0, 0);
 
       SetScale(defaultAtom, 0);
+      SetScaleDegree(defaultAtom, 5);
+      SetChangeChance(defaultAtom, 1);
 
       return defaultAtom;
     }
+
+
+    SPoint crit_2(EventWindow<CC>& window, const SPoint sp) const {
+      SPoint newPoint = SPoint(0, 0);
+      Random & random = window.GetRandom();
+      SPoint lowestNote;
+      for (s32 x = 0; x > -4; x--) {
+        const SPoint dif = SPoint(sp.GetX(), x);
+        if (window.GetRelativeAtom(dif).GetType() == Element_Note<CC>::THE_INSTANCE.GetType()) {
+          lowestNote = dif;
+        }
+      }
+
+      //if this note is the lowest note in the chord, we will probably keep it
+      if (lowestNote == sp) {
+        newPoint = random.OneIn(10) ? (random.OneIn(2) ? SPoint (0, 1) : SPoint(0, -1)) : SPoint(0, 0);
+      }
+      //if this note is not the lowest note in the chord, we will look to make a triad
+      else {
+        //our note is not in the triad
+        if (lowestNote != SPoint(sp.GetX(), -2)) {
+          newPoint = random.OneIn(10) ? SPoint(0, 0) : (random.OneIn(2) ? SPoint(0, 1) : SPoint(0, -1));
+        }
+        //our note is in the triad
+        else {
+          newPoint = random.OneIn(10) ? (random.OneIn(2) ? SPoint(0, 1) : SPoint(0, -1)) : SPoint(0, 0);
+        }
+      }
+      return newPoint;
+    }
+
+    SPoint crit_3_1(EventWindow<CC>& window, const SPoint sp) const {
+      return SPoint(0, 0);
+    }
+
 
     virtual void Behavior(EventWindow<CC>& window) const
     {
       T us = window.GetCenterAtom();
       Random & random = window.GetRandom();
       const MDist<R>& md = MDist<R>::get();
-      bool performedAction = false;
+      bool changedSD = false;
 
       for (u32 idx = md.GetFirstIndex(1); idx <= md.GetLastIndex(1); ++idx) {
         const SPoint sp = md.GetPoint(idx);
@@ -163,22 +229,20 @@ namespace MFM
           }
         }
 
-	//have a chance to change your SD. the chance increases or decreases based on the other composer's SD
-	if (otherType == Element_Composer<CC>::THE_INSTANCE.GetType()) {
-	  if (GetScaleDegree(us) == other.GetScaleDegree(other)) {
-	    IncreaseChangeChance(us);
-	  }
-	  else {
-	    DecreaseChangeChance(us);
-	  }
-	  
-	  if(Change(us)) {
-	    SetScaleDegree(us, other.GetScaleDegree(other));
-	  }
-	  else if (random.OneIn(500)) {
-	    SetScaleDegree(us, random.Create(7));
-	  }
-	}
+        //have a chance to change your SD. the chance increases or decreases based on the other composer's SD
+        if (otherType == Element_Composer<CC>::THE_INSTANCE.GetType()) {
+          if (GetScaleDegree(us) == GetScaleDegree(other)) {
+            IncreaseChangeChance(us);
+          }
+          else {
+            DecreaseChangeChance(us);
+          }
+
+          if(ShouldChange(us, random)) {
+            SetScaleDegree(us, GetScaleDegree(other));
+            changedSD = true;
+          }
+        }
 
 
         if (otherType == Element_Note<CC>::THE_INSTANCE.GetType()) {
@@ -187,37 +251,23 @@ namespace MFM
 
             //only look to the sides
             if (sp.GetY() == 0) {
-              SPoint lowestNote;
-              for (s32 x = 0; x > -4; x--) {
-                const SPoint dif = SPoint(sp.GetX(), x);
-                if (window.GetRelativeAtom(dif).GetType() == Element_Note<CC>::THE_INSTANCE.GetType()) {
-                  lowestNote = dif;
-                }
-              }
 
-              //if this note is the lowest note in the chord, we will probably keep it
-              if (lowestNote == sp) {
-                newPoint = random.OneIn(10) ? (random.OneIn(2) ? SPoint (0, 1) : SPoint(0, -1)) : SPoint(0, 0);
-              }
-              //if this note is not the lowest note in the chord, we will look to make a triad
-              else {
-                //our note is not in the triad
-                if (lowestNote != SPoint(sp.GetX(), -2)) {
-                  newPoint = random.OneIn(10) ? SPoint(0, 0) : (random.OneIn(2) ? SPoint(0, 1) : SPoint(0, -1));
-                }
-                //our note is in the triad
-                else {
-                  newPoint = random.OneIn(10) ? (random.OneIn(2) ? SPoint(0, 1) : SPoint(0, -1)) : SPoint(0, 0);
-                }
-              }
+              //Composers try to make specific triads. They talk to surrounding Composers to decide if they want to switch their triad
+              //newPoint = crit_3_1(window, sp);
+
+              //Composers just try to make triads. They don't have any specific one they are trying to make
+              newPoint = crit_2(window, sp);
             }
-         
+
 
             window.SwapAtoms(sp, sp + newPoint);
           }
         }
       }
-	window.SetCenterAtom(us); //Just in case we changed the SD
+      if (!changedSD && random.OneIn(0)) {
+        SetScaleDegree(us, random.Create(7));
+      }
+      window.SetCenterAtom(us); //Just in case we changed the SD
       this->Diffuse(window);
     }
   };
