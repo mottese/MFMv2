@@ -57,7 +57,7 @@ namespace MFM
       SCALE_DEGREE_LEN = 3,
 
       CHANGE_SD_POS = SCALE_DEGREE_POS + SCALE_DEGREE_LEN,
-      CHANGE_SD_LEN = 4
+      CHANGE_SD_LEN = 8
     };
 
     typedef BitField<BitVector<BITS>, VD::U32, SCALE_LEN, SCALE_POS> AFScale;
@@ -89,20 +89,29 @@ namespace MFM
 
     bool ShouldChange(const T& us, Random & random) const
     {
-      return random.OneIn(AFChangeSD::Read(this->GetBits(us)) + 1);
+      u32 changesd = AFChangeSD::Read(this->GetBits(us));
+      return random.OneIn(changesd);
     }
     void IncreaseChangeChance(T& us) const
     {
       u32 newChance = AFChangeSD::Read(this->GetBits(us));
-      if (newChance > 0) newChance--; //-- because we do OneIn(chance)
-      AFChangeSD::Write(this->GetBits(us), newChance);
+      if (newChance > 1) {
+        newChance--; //-- because we do OneIn(chance)
+        AFChangeSD::Write(this->GetBits(us), newChance);
+      }
     }
     void DecreaseChangeChance(T& us) const
     {
       u32 newChance = AFChangeSD::Read(this->GetBits(us));
-      if (newChance < 15) newChance++; //++ because we do OneIn(chance)
-      AFChangeSD::Write(this->GetBits(us), newChance);
+      if (newChance < 255) {
+        newChance++; //++ because we do OneIn(chance)
+        AFChangeSD::Write(this->GetBits(us), newChance);
+      }
     }
+
+
+    ElementParameterS32<CC> m_scaleDegree;
+    ElementParameterS32<CC> m_behavior;
 
 
   public:
@@ -114,7 +123,11 @@ namespace MFM
     }
 
     Element_Composer()
-      : Element<CC>(MFM_UUID_FOR("Composer", MUSIC_VERSION))
+      : Element<CC>(MFM_UUID_FOR("Composer", MUSIC_VERSION)),
+        m_scaleDegree(this, "chord", "Target Chord",
+                      "The chord that this composer is trying to make.", 0, 0, 6),
+        m_behavior(this, "behavior", "Behavior level",
+                   "The complexity of this Composer's behavior.", 1, 2, 3)
     {
       Element<CC>::SetAtomicSymbol("Cp");
       Element<CC>::SetName("Composer");
@@ -165,10 +178,17 @@ namespace MFM
       static T defaultAtom(TYPE(), 0, 0, 0);
 
       SetScale(defaultAtom, 0);
-      SetScaleDegree(defaultAtom, 5);
-      SetChangeChance(defaultAtom, 1);
+
+
+
+      SetScaleDegree(defaultAtom, m_scaleDegree.GetValue());
+      SetChangeChance(defaultAtom, 65535);
 
       return defaultAtom;
+    }
+
+    SPoint random_movement(EventWindow<CC>& window) const {
+      return SPoint(0, window.GetRandom().Create(3) - 1);
     }
 
 
@@ -223,40 +243,64 @@ namespace MFM
         if (otherType == Element_Res<CC>::THE_INSTANCE.GetType()) {
           if (random.OneIn(2)) {  //turn res into note
             window.SetRelativeAtom(sp, Element_Note<CC>::THE_INSTANCE.GetDefaultAtom());
+            break;
           }
           else if (random.OneIn(100)) { //turn res into composer
             window.SetRelativeAtom(sp, GetDefaultAtom());
+            break;
           }
         }
 
         //have a chance to change your SD. the chance increases or decreases based on the other composer's SD
         if (otherType == Element_Composer<CC>::THE_INSTANCE.GetType()) {
           if (GetScaleDegree(us) == GetScaleDegree(other)) {
-            IncreaseChangeChance(us);
+            DecreaseChangeChance(us);
           }
           else {
-            DecreaseChangeChance(us);
+            IncreaseChangeChance(us);
           }
 
           if(ShouldChange(us, random)) {
             SetScaleDegree(us, GetScaleDegree(other));
+            SetChangeChance(us, 255);
             changedSD = true;
+            break;
           }
         }
 
 
         if (otherType == Element_Note<CC>::THE_INSTANCE.GetType()) {
           if (random.OneIn(50)) { //move the note
-            SPoint newPoint = SPoint(0, 0);
+            SPoint newPoint = SPoint(0, 1);
 
             //only look to the sides
             if (sp.GetY() == 0) {
 
-              //Composers try to make specific triads. They talk to surrounding Composers to decide if they want to switch their triad
+              /*switch(m_behavior.GetValue()) {
+              case 1:
+                newPoint = random_movement(window);
+                break;
+              case 2:
+                newPoint = crit_2(window, sp);
+                break;
+              case 3:
+                newPoint = crit_3_1(window, sp);
+                break;
+              default:
+                newPoint = random_movement(window);
+                }*/
+
+
+              //Composers try to make specific triads
               //newPoint = crit_3_1(window, sp);
 
               //Composers just try to make triads. They don't have any specific one they are trying to make
-              newPoint = crit_2(window, sp);
+              //newPoint = crit_2(window, sp);
+
+              //Composers move notes randomly
+              //newPoint = random_movement(window);
+
+              break;
             }
 
 
@@ -264,11 +308,12 @@ namespace MFM
           }
         }
       }
-      if (!changedSD && random.OneIn(0)) {
+      //chance to randomly change SD
+      if (!changedSD && random.OneIn(10000)) {
         SetScaleDegree(us, random.Create(7));
       }
       window.SetCenterAtom(us); //Just in case we changed the SD
-      this->Diffuse(window);
+      //this->Diffuse(window);
     }
   };
 
