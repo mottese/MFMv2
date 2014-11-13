@@ -270,11 +270,10 @@ namespace MFM
 
 
         if (otherType == Element_Note<CC>::THE_INSTANCE.GetType()) {
-          if (random.OneIn(50)) { //move the note
-            SPoint newPoint = SPoint(0, 1);
+          SPoint newPoint = SPoint(0, 1);
 
-            //only look to the sides
-            if (sp.GetY() == 0) {
+          //only look to the sides
+          if (sp.GetY() == 0) {
 
               /*switch(m_behavior.GetValue()) {
               case 1:
@@ -300,12 +299,13 @@ namespace MFM
               //Composers move notes randomly
               //newPoint = random_movement(window);
 
-              break;
-            }
-
-
+            //break;
             window.SwapAtoms(sp, sp + newPoint);
           }
+
+
+          //window.SwapAtoms(sp, sp + newPoint);
+
         }
       }
       //chance to randomly change SD
@@ -313,7 +313,7 @@ namespace MFM
         SetScaleDegree(us, random.Create(7));
       }
       window.SetCenterAtom(us); //Just in case we changed the SD
-      //this->Diffuse(window);
+      this->Diffuse(window);
     }
   };
 
