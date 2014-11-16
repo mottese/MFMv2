@@ -178,11 +178,8 @@ namespace MFM
       static T defaultAtom(TYPE(), 0, 0, 0);
 
       SetScale(defaultAtom, 0);
-
-
-
       SetScaleDegree(defaultAtom, m_scaleDegree.GetValue());
-      SetChangeChance(defaultAtom, 65535);
+      SetChangeChance(defaultAtom, 255);
 
       return defaultAtom;
     }
@@ -221,7 +218,61 @@ namespace MFM
       return newPoint;
     }
 
-    SPoint crit_3_1(EventWindow<CC>& window, const SPoint sp) const {
+    SPoint crit_3_1(EventWindow<CC>& window, const SPoint sp, const T us) const {
+      u32 us_sd = GetScaleDegree(us);
+      u32 ok_sds [] = {us_sd, (us_sd + 2) % 7, (us_sd + 4) % 7};
+      SPoint newPoint = SPoint(0, 0);
+
+      const T note = window.GetRelativeAtom(sp);
+      u32 note_sd = Element_Note<CC>::THE_INSTANCE.GetScaleDegree(note);
+
+      if (note_sd == ok_sds[0] || note_sd == ok_sds[1] || note_sd == ok_sds[2]) {
+	//We are good to leave the note alone
+      }
+      else if (note_sd == ((ok_sds[0] + 1) % 7) || note_sd == ((ok_sds[1] + 1) % 7)) {
+	//We can move the note up or down
+	if (window.GetRandom().OneIn(2)) { //try to move up
+	  const T above = window.GetRelativeAtom(sp + SPoint(0, -1));
+	  if (above.GetType() == Element_Note<CC>::THE_INSTANCE.GetType()) {
+	    window.SetRelativeAtom(sp, Element_Empty<CC>::THE_INSTANCE.GetDefaultAtom());
+	  }
+	  else {
+	    return SPoint(0, -1);
+	  }
+	}
+	else { //try to move down
+	  const T below = window.GetRelativeAtom(sp + SPoint(0, 1)); //+y axis is down
+	  if (below.GetType() == Element_Note<CC>::THE_INSTANCE.GetType()) {
+	    //Can't move the note down because another one is already there. Delete our atom
+	    window.SetRelativeAtom(sp, Element_Empty<CC>::THE_INSTANCE.GetDefaultAtom());
+	  }
+	  else {
+	    return SPoint (0, 1);
+	  }
+	}
+      }
+      else if (note_sd == ((ok_sds[2] + 1) % 7)) {
+	//move the note down
+	const T below = window.GetRelativeAtom(sp + SPoint(0, 1)); //+y axis is down
+	if (below.GetType() == Element_Note<CC>::THE_INSTANCE.GetType()) {
+	  //Can't move the note down because another one is already there. Delete our atom
+	  window.SetRelativeAtom(sp, Element_Empty<CC>::THE_INSTANCE.GetDefaultAtom());
+	}
+	else {
+	  return SPoint (0, 1);
+	}
+      }
+      else {
+	//move the note up
+	const T above = window.GetRelativeAtom(sp + SPoint(0, -1));
+	if (above.GetType() == Element_Note<CC>::THE_INSTANCE.GetType()) {
+	  window.SetRelativeAtom(sp, Element_Empty<CC>::THE_INSTANCE.GetDefaultAtom());
+	}
+	else {
+	  return SPoint(0, -1);
+	}
+      }
+
       return SPoint(0, 0);
     }
 
@@ -270,12 +321,12 @@ namespace MFM
 
 
         if (otherType == Element_Note<CC>::THE_INSTANCE.GetType()) {
-          SPoint newPoint = SPoint(0, 1);
+          SPoint newPoint = SPoint(0, 0);
 
           //only look to the sides
           if (sp.GetY() == 0) {
 
-              /*switch(m_behavior.GetValue()) {
+              switch(m_behavior.GetValue()) {
               case 1:
                 newPoint = random_movement(window);
                 break;
@@ -283,11 +334,11 @@ namespace MFM
                 newPoint = crit_2(window, sp);
                 break;
               case 3:
-                newPoint = crit_3_1(window, sp);
+                newPoint = crit_3_1(window, sp, us);
                 break;
               default:
-                newPoint = random_movement(window);
-                }*/
+		break;
+              }
 
 
               //Composers try to make specific triads

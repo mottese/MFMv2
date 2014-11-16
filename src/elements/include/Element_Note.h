@@ -59,6 +59,8 @@ namespace MFM
     typedef BitField<BitVector<BITS>, VD::U32, SCALE_DEGREE_LEN, SCALE_DEGREE_POS> AFScaleDegree;
     typedef BitField<BitVector<BITS>, VD::U32, ACCIDENTAL_LEN, ACCIDENTAL_POS> AFAccidental;
 
+  public:
+
     u32 GetScaleDegree(const T& us) const
     {
       return AFScaleDegree::Read(this->GetBits(us));
@@ -76,10 +78,7 @@ namespace MFM
     {
       AFAccidental::Write(this->GetBits(us), newAccidental);
     }
-
-
-  public:
-
+  
     static Element_Note<CC> THE_INSTANCE;
     static const u32 TYPE()
     {
@@ -119,6 +118,7 @@ namespace MFM
       static T defaultAtom(TYPE(), 0, 0, 0);
 
       SetAccidental(defaultAtom, 0);
+      SetScaleDegree(defaultAtom, 0);
 
       return defaultAtom;
     }
@@ -138,7 +138,7 @@ namespace MFM
           p -= sp;
 
           //LOG.Message("sd: %d", p.GetY() % 7);
-          SetScaleDegree(us, (p.GetY() % 7) + 1); //Scale degree is 1-7
+          SetScaleDegree(us, (p.GetY() % 7)); //Scale degree is 0-6
           window.SetCenterAtom(us);
 
           break;
