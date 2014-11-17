@@ -202,17 +202,17 @@ namespace MFM
 
       //if this note is the lowest note in the chord, we will probably keep it
       if (lowestNote == sp) {
-        newPoint = random.OneIn(10) ? (random.OneIn(2) ? SPoint (0, 1) : SPoint(0, -1)) : SPoint(0, 0);
+        newPoint = random.OneIn(10) ? (random.OneIn(2) ? SPoint (0, -1) : SPoint(0, 1)) : SPoint(0, 0);
       }
       //if this note is not the lowest note in the chord, we will look to make a triad
       else {
         //our note is not in the triad
         if (lowestNote != SPoint(sp.GetX(), -2)) {
-          newPoint = random.OneIn(10) ? SPoint(0, 0) : (random.OneIn(2) ? SPoint(0, 1) : SPoint(0, -1));
+          newPoint = random.OneIn(10) ? SPoint(0, 0) : (random.OneIn(2) ? SPoint(0, -1) : SPoint(0, 1));
         }
         //our note is in the triad
         else {
-          newPoint = random.OneIn(10) ? (random.OneIn(2) ? SPoint(0, 1) : SPoint(0, -1)) : SPoint(0, 0);
+          newPoint = random.OneIn(10) ? (random.OneIn(2) ? SPoint(0, -1) : SPoint(0, 1)) : SPoint(0, 0);
         }
       }
       return newPoint;
@@ -342,15 +342,15 @@ namespace MFM
 
             window.SwapAtoms(sp, sp + newPoint);
           }
-	  else if (m_behavior.GetValue() == 3 && random.OneIn(1000)) {
-	    u32 us_sd = GetScaleDegree(us);
-	    u32 ok_sds [] = {us_sd, (us_sd + 2) % 7, (us_sd + 4) % 7};
-	    u32 other_sd = Element_Note<CC>::THE_INSTANCE.GetScaleDegree(other);
-	    //special behavior for crit_3 since rows of notes get stuck between the staff
-	    if (ok_sds[0] != other_sd && ((ok_sds[1] + 2) % 7) != other_sd && ((ok_sds[2] + 4) % 7) != other_sd) {
-	      window.SetRelativeAtom(sp, Element_Empty<CC>::THE_INSTANCE.GetDefaultAtom());
-	    }
-	  }
+	  //else if (m_behavior.GetValue() == 3 && random.OneIn(1000)) {
+	  //  u32 us_sd = GetScaleDegree(us);
+	  //  u32 ok_sds [] = {us_sd, (us_sd + 2) % 7, (us_sd + 4) % 7};
+	  //  u32 other_sd = Element_Note<CC>::THE_INSTANCE.GetScaleDegree(other);
+	  //  //special behavior for crit_3 since rows of notes get stuck between the staff
+	  //  if (ok_sds[0] != other_sd && ((ok_sds[1] + 2) % 7) != other_sd && ((ok_sds[2] + 4) % 7) != other_sd) {
+	  //    window.SetRelativeAtom(sp, Element_Empty<CC>::THE_INSTANCE.GetDefaultAtom());
+	  //  }
+	  //}
         }
       }
       //chance to randomly change SD

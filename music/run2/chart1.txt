@@ -1,0 +1,40 @@
+http://jsfiddle.net/hoc8Lkoo/
+
+html:
+<script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['corechart']}]}"></script>
+<div id="chart_div" style="width: 900px; height: 500px;"></div>
+
+js:
+      google.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+          var data = google.visualization.arrayToDataTable([
+              ['Number of Notes in Chord', 'Random', 'Any Chord', 'Specific Chord'],
+              ['2 notes', 0.324103009259259, 0.369126157407407, 0.384545855379189],
+              ['3 notes', 0.237326388888889, 0.188528806584362, 0.266761982570806],
+              ['4 notes', 0.159652777777778, 0.193368736383442, 0.251388888888889],
+              ['5 notes', 0.153604497354497, 0.204199735449735, 0.168287037037037],
+              ['6 notes', 0.180941358024691, 0.187731481481481, 0],
+              ['7 notes', 0, 0.218287037037037, 0]
+          ]);
+
+          var options = {
+              title: 'Consonance Measured using the Ptolemaic Sequence',
+              vAxis: {
+                  title: 'Number of Notes in Chord',
+                  titleTextStyle: {
+                      color: 'black'
+                  }
+              },
+              hAxis: {
+                  title: 'Consonance',
+                  titleTextStyle: {
+                      color: 'black'
+                  }
+              }
+          };
+
+          var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
+
+          chart.draw(data, options);
+      }
