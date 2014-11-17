@@ -127,7 +127,7 @@ namespace MFM
         m_scaleDegree(this, "chord", "Target Chord",
                       "The chord that this composer is trying to make.", 0, 0, 6),
         m_behavior(this, "behavior", "Behavior level",
-                   "The complexity of this Composer's behavior.", 1, 2, 3)
+                   "The complexity of this Composer's behavior.", 1, 3, 3)
     {
       Element<CC>::SetAtomicSymbol("Cp");
       Element<CC>::SetName("Composer");
@@ -340,27 +340,21 @@ namespace MFM
 		break;
               }
 
-
-              //Composers try to make specific triads
-              //newPoint = crit_3_1(window, sp);
-
-              //Composers just try to make triads. They don't have any specific one they are trying to make
-              //newPoint = crit_2(window, sp);
-
-              //Composers move notes randomly
-              //newPoint = random_movement(window);
-
-            //break;
             window.SwapAtoms(sp, sp + newPoint);
           }
-
-
-          //window.SwapAtoms(sp, sp + newPoint);
-
+	  else if (m_behavior.GetValue() == 3 && random.OneIn(1000)) {
+	    u32 us_sd = GetScaleDegree(us);
+	    u32 ok_sds [] = {us_sd, (us_sd + 2) % 7, (us_sd + 4) % 7};
+	    u32 other_sd = Element_Note<CC>::THE_INSTANCE.GetScaleDegree(other);
+	    //special behavior for crit_3 since rows of notes get stuck between the staff
+	    if (ok_sds[0] != other_sd && ((ok_sds[1] + 2) % 7) != other_sd && ((ok_sds[2] + 4) % 7) != other_sd) {
+	      window.SetRelativeAtom(sp, Element_Empty<CC>::THE_INSTANCE.GetDefaultAtom());
+	    }
+	  }
         }
       }
       //chance to randomly change SD
-      if (!changedSD && random.OneIn(10000)) {
+      if (!changedSD && random.OneIn(1000)) {
         SetScaleDegree(us, random.Create(7));
       }
       window.SetCenterAtom(us); //Just in case we changed the SD
