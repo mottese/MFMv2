@@ -1,0 +1,4 @@
+random  - Sample D
+level2  - Sample A
+level3  - Sample B
+perfect - Sample C
