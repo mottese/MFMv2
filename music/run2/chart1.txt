@@ -1,5 +1,5 @@
-http://jsfiddle.net/x0u3mecq/
-http://jsfiddle.net/x0u3mecq/1/
+http://jsfiddle.net/x0u3mecq/2/
+http://jsfiddle.net/x0u3mecq/3/
 
 html:
 <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['corechart']}]}"></script>
@@ -12,22 +12,22 @@ js:
           var data = google.visualization.arrayToDataTable([
               ['Number of Notes in Chord', 'Random', 'Any Chord', 'Specific Chord', 'One Chord'],
               ['2 notes', 0.324103009259259, 0.369126157407407, 0.384545855379189, 0.833333333333333],
-              ['3 notes', 0.237326388888889, 0.188528806584362, 0.266761982570806, 0.616666666666667],
+              ['3 notes', 0.188528806584362, 0.237326388888889, 0.266761982570806, 0.616666666666667],
               ['4 notes', 0.159652777777778, 0.193368736383442, 0.251388888888889, 0.268055555555556],
-              ['5 notes', 0.153604497354497, 0.204199735449735, 0.168287037037037, 0.318055555555556],
-              ['6 notes', 0.180941358024691, 0.187731481481481, 0, 0.20183],
-              ['7 notes', 0, 0.218287037037037, 0, 0.218287037037037]
+              ['5 notes', 0.153604497354497, 0.168287037037037, 0.204199735449735, 0.318055555555556],
+              ['6 notes', 0.180941358024691, 0.187731481481481, 0.187731481481481, 0.187731481481481],
+              ['7 notes', 0.218287037037037, 0.218287037037037, 0, 0.218287037037037]
           ]);
 
           var options = {
-              title: 'Consonance Measured using the Ptolemaic Sequence',
-              hAxis: {
+              title: 'Consonance Measured using the Justly Intonated Naturals',
+              vAxis: {
                   title: 'Number of Notes in Chord',
                   titleTextStyle: {
                       color: 'black'
                   }
               },
-              vAxis: {
+              hAxis: {
                   title: 'Consonance',
                   titleTextStyle: {
                       color: 'black'
@@ -46,10 +46,10 @@ js2:
 
       function drawChart() {
           var data = google.visualization.arrayToDataTable([['', ''],
-              ['Random', 0],
-              ['Any Chord', 1],
-              ['Specific Chords', 3],
-              ['One Chord', 3]
+              ['Random', 1],
+              ['Any Chord', 3],
+              ['Specific Chords', 14],
+              ['One Chord', 2]
           ]);
 
           var options = {
